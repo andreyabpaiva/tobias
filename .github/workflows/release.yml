@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: VERSION must match the tag
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          version="$(tr -d '[:space:]' < VERSION)"
+          if [ "v$version" != "$tag" ]; then
+            echo "VERSION ($version) does not match tag ($tag)" >&2
+            exit 1
+          fi
+
+      - name: Build and test
+        run: |
+          swift build
+          swift test
+
+      - name: Package source tarball and checksum
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          git archive --format=tar.gz --prefix="tobias-$tag/" -o "tobias-$tag.tar.gz" HEAD
+          shasum -a 256 "tobias-$tag.tar.gz" | awk '{print $1}' > "tobias-$tag.tar.gz.sha256"
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            tobias-${{ github.ref_name }}.tar.gz
+            tobias-${{ github.ref_name }}.tar.gz.sha256
+            install.sh
+          generate_release_notes: true

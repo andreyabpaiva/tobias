@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:tobias}",
+      "name": "Debug Tobias",
+      "target": "Tobias",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug Tobias"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:tobias}",
+      "name": "Release Tobias",
+      "target": "Tobias",
+      "configuration": "release",
+      "preLaunchTask": "swift: Build Release Tobias"
+    }
+  ]
+}

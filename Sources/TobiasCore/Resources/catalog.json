@@ -1,0 +1,205 @@
+[
+  {
+    "id": "homebrew",
+    "label": "Homebrew cache",
+    "note": "Old downloads and outdated versions. Runs brew cleanup.",
+    "paths": ["~/Library/Caches/Homebrew"],
+    "action": "command",
+    "command": "brew cleanup",
+    "risk": "regenerates"
+  },
+  {
+    "id": "npm",
+    "label": "npm cache",
+    "note": "Downloaded packages. Rebuilt as you install.",
+    "paths": ["~/.npm"],
+    "action": "command",
+    "command": "npm cache clean --force",
+    "risk": "regenerates"
+  },
+  {
+    "id": "pnpm",
+    "label": "pnpm store",
+    "note": "Removes only packages no project uses. Runs pnpm store prune.",
+    "paths": ["~/Library/pnpm"],
+    "action": "command",
+    "command": "pnpm store prune",
+    "risk": "regenerates"
+  },
+  {
+    "id": "yarn",
+    "label": "Yarn cache",
+    "note": "Downloaded packages. Rebuilt as you install.",
+    "paths": ["~/Library/Caches/Yarn"],
+    "action": "command",
+    "command": "yarn cache clean",
+    "risk": "regenerates"
+  },
+  {
+    "id": "go-build",
+    "label": "Go build cache",
+    "note": "The first build afterwards is slower.",
+    "paths": ["~/Library/Caches/go-build"],
+    "action": "command",
+    "command": "go clean -cache",
+    "risk": "regenerates"
+  },
+  {
+    "id": "gradle",
+    "label": "Gradle cache",
+    "note": "The next Android or Java build downloads dependencies again.",
+    "paths": ["~/.gradle/caches"],
+    "action": "removeContents",
+    "risk": "redownloads"
+  },
+  {
+    "id": "xcode-derived-data",
+    "label": "Xcode DerivedData",
+    "note": "Build products and indexes. Rebuilt by Xcode.",
+    "paths": ["~/Library/Developer/Xcode/DerivedData"],
+    "action": "removeContents",
+    "risk": "regenerates"
+  },
+  {
+    "id": "spotify-cache",
+    "label": "Spotify cache",
+    "note": "Cached songs and artwork. Quit Spotify first.",
+    "paths": [
+      "~/Library/Caches/com.spotify.client",
+      "~/Library/Application Support/Spotify/PersistentCache"
+    ],
+    "action": "removeContents",
+    "quitApps": ["com.spotify.client"],
+    "risk": "regenerates"
+  },
+  {
+    "id": "notion-cache",
+    "label": "Notion cache",
+    "note": "Page content already synced to the cloud. Quit Notion first.",
+    "paths": ["~/Library/Application Support/Notion/Partitions"],
+    "action": "removeContents",
+    "quitApps": ["notion.id"],
+    "risk": "regenerates"
+  },
+  {
+    "id": "vscode-cache",
+    "label": "VS Code caches",
+    "note": "Extension packages and compiled caches. Quit VS Code first.",
+    "paths": [
+      "~/Library/Application Support/Code/{CachedExtensionVSIXs,CachedData,WebStorage,Partitions,GPUCache,DawnWebGPUCache,DawnGraphiteCache}"
+    ],
+    "action": "removeContents",
+    "quitApps": ["com.microsoft.VSCode"],
+    "risk": "regenerates"
+  },
+  {
+    "id": "arc-cache",
+    "label": "Arc browser cache",
+    "note": "Web cache only. Bookmarks and history are not touched. Quit Arc first.",
+    "paths": ["~/Library/Caches/Arc"],
+    "action": "removeContents",
+    "quitApps": ["company.thebrowser.Browser"],
+    "risk": "regenerates"
+  },
+  {
+    "id": "discord-downloads",
+    "label": "Discord downloads",
+    "note": "Update packages already installed. Quit Discord first.",
+    "paths": ["~/Library/Application Support/discord/download"],
+    "action": "removeContents",
+    "quitApps": ["com.hnc.Discord"],
+    "risk": "regenerates"
+  },
+  {
+    "id": "claude-vm",
+    "label": "Claude Desktop VM",
+    "note": "Sandbox image for code execution. Downloads again if you use the feature. Quit Claude first.",
+    "paths": ["~/Library/Application Support/Claude/vm_bundles"],
+    "action": "removeContents",
+    "quitApps": ["com.anthropic.claudefordesktop"],
+    "risk": "redownloads"
+  },
+  {
+    "id": "claude-updater",
+    "label": "Claude Desktop updater cache",
+    "note": "Update packages that are already installed.",
+    "paths": ["~/Library/Caches/com.anthropic.claudefordesktop.ShipIt"],
+    "action": "removeContents",
+    "risk": "regenerates"
+  },
+  {
+    "id": "system-logs",
+    "label": "System logs",
+    "note": "Root-owned. Find the biggest file, then truncate it yourself in Terminal. Tobias never runs sudo.",
+    "paths": ["/private/var/log"],
+    "action": "manual",
+    "manualCommand": "sudo du -sh /private/var/log/* | sort -rh | head",
+    "risk": "regenerates"
+  },
+  {
+    "id": "uv-cache",
+    "label": "uv cache",
+    "note": "Downloaded Python packages. Rebuilt as you install.",
+    "paths": ["~/.cache/uv"],
+    "action": "removeContents",
+    "risk": "regenerates"
+  },
+  {
+    "id": "bun-cache",
+    "label": "Bun cache",
+    "note": "Downloaded packages. Rebuilt as you install.",
+    "paths": ["~/.bun/install/cache"],
+    "action": "removeContents",
+    "risk": "regenerates"
+  },
+  {
+    "id": "huggingface-cache",
+    "label": "Hugging Face models",
+    "note": "Downloaded models and datasets. They download again when a tool asks for them.",
+    "paths": ["~/.cache/huggingface"],
+    "action": "removeContents",
+    "risk": "redownloads"
+  },
+  {
+    "id": "codex-runtimes",
+    "label": "Codex runtimes",
+    "note": "Runtimes downloaded by Codex. They download again when needed.",
+    "paths": ["~/.cache/codex-runtimes"],
+    "action": "removeContents",
+    "risk": "redownloads"
+  },
+  {
+    "id": "cypress-binary",
+    "label": "Cypress binaries",
+    "note": "Downloaded test runner. Run npx cypress install to get it back.",
+    "paths": ["~/Library/Caches/Cypress"],
+    "action": "removeContents",
+    "risk": "redownloads"
+  },
+  {
+    "id": "playwright-browsers",
+    "label": "Playwright browsers",
+    "note": "Downloaded browsers. Run npx playwright install to get them back.",
+    "paths": ["~/Library/Caches/ms-playwright"],
+    "action": "removeContents",
+    "risk": "redownloads"
+  },
+  {
+    "id": "docker-install-staging",
+    "label": "Docker update staging",
+    "note": "A downloaded Docker Desktop update that was never applied. Quit Docker first.",
+    "paths": ["~/Library/Application Support/com.docker.install/in_progress"],
+    "action": "removeContents",
+    "quitApps": ["com.docker.docker"],
+    "risk": "redownloads"
+  },
+  {
+    "id": "android-system-images",
+    "label": "Android emulator images",
+    "note": "Virtual devices that use these images stop working until you install them again in Android Studio's SDK Manager. Quit Android Studio first.",
+    "paths": ["~/Library/Android/sdk/system-images"],
+    "action": "removeContents",
+    "quitApps": ["com.google.android.studio"],
+    "risk": "redownloads"
+  }
+]

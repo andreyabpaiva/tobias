@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+# tobias: lifecycle commands for the Tobias app (update, uninstall, purge, version, doctor).
+# The app itself has no network code. Only this script talks to GitHub.
+set -euo pipefail
+
+REPO="${TOBIAS_REPO:-OWNER/tobias}"
+APP_DIR="${TOBIAS_APP_DIR:-$HOME/Applications}"
+BIN_DIR="${TOBIAS_BIN_DIR:-$HOME/.local/bin}"
+APP="$APP_DIR/Tobias.app"
+APP_BIN="$APP/Contents/MacOS/Tobias"
+DATA_DIR="${TOBIAS_DATA_DIR:-$HOME/Library/Application Support/Tobias}"
+
+say() { printf '%s\n' "$*"; }
+fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
+
+installed_version() {
+  if [ -x "$APP_BIN" ]; then "$APP_BIN" --version 2>/dev/null || echo "unknown"; else echo "not installed"; fi
+}
+
+latest_tag() {
+  curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" \
+    | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -1
+}
+
+quit_app() {
+  if pgrep -x Tobias >/dev/null 2>&1; then
+    pkill -x Tobias || true
+    for _ in 1 2 3 4 5 6 7 8 9 10; do pgrep -x Tobias >/dev/null 2>&1 || return 0; sleep 0.5; done
+  fi
+}
+
+cmd_version() {
+  say "app: $(installed_version)"
+  say "cli: $0"
+}
+
+cmd_update() {
+  local latest current
+  latest="$(latest_tag)"
+  [ -n "$latest" ] || fail "could not read the latest release from GitHub ($REPO)"
+  current="$(installed_version)"
+  if [ "v$current" = "$latest" ] || [ "$current" = "$latest" ]; then
+    say "Already up to date ($current)."
+    return 0
+  fi
+  say "Updating $current -> $latest"
+  if [ -n "${TOBIAS_INSTALL_SCRIPT:-}" ]; then
+    TOBIAS_REF="$latest" bash "$TOBIAS_INSTALL_SCRIPT"
+  else
+    curl -fsSL "https://github.com/$REPO/releases/download/$latest/install.sh" | TOBIAS_REF="$latest" bash
+  fi
+}
+
+cmd_uninstall() {
+  quit_app
+  if [ -x "$APP_BIN" ]; then "$APP_BIN" --unregister-login >/dev/null 2>&1 || true; fi
+  if [ -d "$APP" ]; then
+    rm -rf "${APP:?}"
+    say "Removed $APP"
+  else
+    say "App not found at $APP"
+  fi
+  local self
+  self="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+  if [ "$self" = "$BIN_DIR/tobias" ]; then
+    say "Removing $self"
+    rm -f "$self"
+  fi
+  say "Your data was kept in $DATA_DIR. Run 'tobias purge' to delete it as well."
+}
+
+cmd_purge() {
+  local assume_yes="${1:-}"
+  case "$DATA_DIR" in
+    */Tobias) ;;
+    *) fail "refusing to delete unexpected data folder: $DATA_DIR" ;;
+  esac
+  if [ "$assume_yes" != "-y" ]; then
+    printf 'Delete %s (scan history and audit log)? [y/N] ' "$DATA_DIR"
+    read -r answer
+    [ "$answer" = "y" ] || { say "Cancelled."; return 0; }
+  fi
+  rm -rf "${DATA_DIR:?}"
+  say "Deleted $DATA_DIR"
+}
+
+cmd_doctor() {
+  say "macOS:        $(sw_vers -productVersion 2>/dev/null || echo unknown)"
+  if xcode-select -p >/dev/null 2>&1; then say "Command Line Tools: ok"; else say "Command Line Tools: missing (xcode-select --install)"; fi
+  if command -v swift >/dev/null 2>&1; then say "swift:        $(swift --version 2>&1 | head -1)"; else say "swift:        missing"; fi
+  say "app:          $APP ($(installed_version))"
+  if [ -x "$APP_BIN" ]; then say "login item:   $("$APP_BIN" --login-status 2>/dev/null || echo unknown)"; fi
+  say "cli:          $BIN_DIR/tobias"
+  case ":$PATH:" in *":$BIN_DIR:"*) say "PATH:         $BIN_DIR is on PATH" ;; *) say "PATH:         $BIN_DIR is NOT on PATH" ;; esac
+  say "data folder:  $DATA_DIR"
+}
+
+usage() {
+  cat <<'USAGE'
+Usage: tobias <command>
+
+  update      install the latest release if it is newer
+  uninstall   remove the app, login item and this command (keeps your data)
+  purge [-y]  delete Tobias' data folder (scan history, audit log)
+  version     show the installed version
+  doctor      check the toolchain and install locations
+USAGE
+}
+
+case "${1:-}" in
+  update) cmd_update ;;
+  uninstall) cmd_uninstall ;;
+  purge) shift; cmd_purge "${1:-}" ;;
+  version|--version|-v) cmd_version ;;
+  doctor) cmd_doctor ;;
+  help|--help|-h|"") usage ;;
+  *) usage; exit 1 ;;
+esac
