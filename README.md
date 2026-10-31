@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/assets/tobias.png" alt="Tobias, a white pixel cat with green eyes" width="128">
+
 # Tobias
 
 **Find the caches, logs and build output eating your Mac's disk, and clear them in one click.**
