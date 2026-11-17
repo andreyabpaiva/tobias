@@ -14,7 +14,10 @@ struct TargetRowView: View {
     private var isSelected: Bool { model.selection.contains(row.id) }
     private var isScanned: Bool { row.size != nil }
     /// Not found or empty: drawn faded with a dashed outline.
-    private var isDimmed: Bool { isScanned && !row.isManual && !row.isBlocked && (!row.exists || row.bytes == 0) }
+    /// A root row measures only what Run would delete, so it dims the same way once that is gone.
+    private var isDimmed: Bool {
+        isScanned && (!row.isManual || row.canRunAsRoot) && !row.isBlocked && (!row.exists || row.bytes == 0)
+    }
     private var showsBar: Bool { isScanned && !isDimmed && !row.isBlocked }
 
     var body: some View {
@@ -26,7 +29,7 @@ struct TargetRowView: View {
                         .font(Theme.Typography.rowTitle)
                         .foregroundStyle(isDimmed ? Theme.Palette.tertiaryText : Theme.Palette.ink)
                     if row.isBlocked { SketchBadge(text: Strings.blocked, tone: .warning) }
-                    if row.isManual { SketchBadge(text: Strings.manual) }
+                    if row.isManual { SketchBadge(text: row.canRunAsRoot ? Strings.adminBadge : Strings.manual) }
                     if row.target.risk == .redownloads { SketchBadge(text: Strings.redownloads, tone: .warning) }
                     OwnerBadge(status: row.target.discovery?.status)
                     Spacer(minLength: Theme.Spacing.s)
@@ -57,7 +60,21 @@ struct TargetRowView: View {
     }
 
     @ViewBuilder private var leading: some View {
-        if row.isManual {
+        if row.canRunAsRoot {
+            Button { model.startRootRun(row.target) } label: {
+                Image(systemName: "play.fill")
+                    .font(.system(size: 11, weight: .semibold))
+                    .frame(width: 28, height: 28)
+                    .sketch(.tiny, fill: Theme.Palette.paper)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(Theme.Palette.accentText)
+            .padding(.horizontal, -5).padding(.top, -3)
+            .help(Strings.runAsAdmin(row.target.label))
+            .accessibilityLabel(Strings.runAsAdmin(row.target.label))
+            .disabled(isDimmed)
+            .opacity(isDimmed ? 0.45 : 1)
+        } else if row.isManual {
             Button { showManual = true } label: {
                 Image(systemName: "terminal")
                     .font(.system(size: 12, weight: .semibold))
@@ -98,6 +115,7 @@ struct TargetRowView: View {
 
     private var detail: String {
         if row.isBlocked { return Strings.blockedHint }
+        if row.canRunAsRoot { return isDimmed ? Strings.empty : row.target.note }
         if row.isManual { return Strings.manualHint }
         if !isScanned { return row.target.note }
         if !row.exists { return Strings.notFound }

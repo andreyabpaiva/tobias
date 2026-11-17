@@ -10,6 +10,7 @@ struct TargetRow: Identifiable, Equatable {
     var id: String { target.id }
     var bytes: Int64 { size?.bytes ?? 0 }
     var isManual: Bool { target.action == .manual }
+    var canRunAsRoot: Bool { isManual && target.rootCommand != nil }
     var isBlocked: Bool { size?.blocked ?? false }
     var exists: Bool { size?.exists ?? false }
     var canSelect: Bool { !isManual && !isBlocked && exists && bytes > 0 }
@@ -51,6 +52,7 @@ final class AppModel {
     }
     var launchAtLogin = false
     var statusMessage: String?
+    var rootRun: RootRunSession?
 
     let store = Store()
     private let pathGuard = PathGuard()
@@ -186,6 +188,36 @@ final class AppModel {
         phase = .done
         selection = []
         await scan()
+    }
+
+    func startRootRun(_ target: Target) {
+        guard target.rootCommand != nil, phase == .idle else { return }
+        let before = rows.first { $0.id == target.id }?.bytes ?? 0
+        rootRun = RootRunSession(target: target) { [weak self] session, code, stopped in
+            await self?.finishRootRun(session, code: code, stopped: stopped, before: before)
+        }
+    }
+
+    func closeRootRun() {
+        rootRun?.stop()
+        rootRun = nil
+    }
+
+    private func finishRootRun(_ session: RootRunSession, code: Int32, stopped: Bool, before: Int64) async {
+        // `scan()` returns at once while another scan runs, which would leave stale sizes; wait it out.
+        while isScanning { try? await Task.sleep(for: .milliseconds(200)) }
+        await scan()
+        let after = rows.first { $0.id == session.target.id }?.bytes ?? before
+        let freed = max(0, before - after)
+        session.freedBytes = freed
+        let detail = stopped ? "Stopped" : (code == 0 ? "Ran as administrator: \(session.target.rootCommand ?? "")" : "Exit \(code)")
+        store.appendAudit(AuditEntry(
+            id: session.target.id,
+            status: code == 0 && !stopped ? CleanStatus.cleaned.rawValue : CleanStatus.failed.rawValue,
+            freedBytes: freed,
+            detail: detail
+        ))
+        if code == 0 && !stopped && freed > 0 { needsRestart = true }
     }
 
     func closeSheet() {

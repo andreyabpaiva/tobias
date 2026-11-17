@@ -11,7 +11,7 @@ Tobias deletes files, so everything that can delete goes through a small set of 
 7. **Re-validated at delete time.** The guard runs at load, at preview and again right before each removal.
 8. **Confirmation.** Cleaning needs a preview and an explicit confirm. Targets marked `redownloads` show an extra warning.
 9. **Apps must be closed.** A target with `quitApps` is blocked while any of those apps run.
-10. **No elevation.** Tobias never runs `sudo` and never asks for a password. Root-owned files are `manual` targets: the command is shown to copy.
+10. **Elevation only on request.** Only a `rootCommand` from the built-in catalog can run as root; `targets.json` cannot add one. It runs through `sudo` when you press ▶︎ Run, asks for your password every time, and never stores it. Today the only one deletes rotated logs in `/private/var/log`.
 11. **Audit.** Every run appends a line to `audit.log` with the target, outcome and bytes freed.
 12. **Fixed commands only.** `command` targets run a string from the catalog in the user's login shell. The built-in catalog is reviewed; user-defined commands carry the same trust as the user's shell configuration.
 

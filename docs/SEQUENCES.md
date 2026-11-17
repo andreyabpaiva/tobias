@@ -64,20 +64,28 @@ sequenceDiagram
   M-->>UI: results + restart banner
 ```
 
-## 3. Manual (root) target
+## 3. Root target ("System logs")
 
 ```mermaid
 sequenceDiagram
   actor U as User
-  participant UI as SwiftUI views
-  participant T as Terminal
-  U->>UI: open "System logs" target
-  UI-->>U: size + explanation + Copy command
-  U->>UI: Copy
-  U->>T: paste and run the sudo command
-  U->>UI: Scan now
-  UI-->>U: updated size
+  participant UI as Run sheet (terminal panel)
+  participant P as PrivilegedRun
+  participant S as /usr/bin/sudo -S -k
+  U->>UI: press ▶︎ on "System logs", then Run
+  UI->>P: start(rootCommand from the built-in catalog)
+  P->>S: sh -c rootCommand
+  S-->>P: password prompt (marker)
+  P-->>UI: .passwordPrompt
+  U->>UI: type password, Return
+  UI->>P: sendPassword (not stored)
+  P->>S: password on stdin
+  S-->>P: output (deleted file names, sizes)
+  P-->>UI: .output … .exited(code)
+  UI->>UI: rescan, audit line, show freed size
 ```
+
+A custom target with a `manualCommand` still only shows the command to copy.
 
 ## 4. First install (no clone)
 

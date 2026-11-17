@@ -45,7 +45,7 @@ The script downloads the latest release, verifies its SHA-256, builds it on your
 <summary>Prefer to read the script first?</summary>
 
 ```bash
-curl -fsSL -o install.sh https://github.com/OWNER/tobias/releases/latest/download/install.sh
+curl -fsSL -o install.sh https://github.com/andreyabpaiva/tobias/releases/latest/download/install.sh
 less install.sh
 bash install.sh
 ```
@@ -79,7 +79,7 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
 - **Build output** from Xcode and other build tools
 - **App caches** for editors, browsers and desktop apps
 - **Downloaded runtimes and assets** such as test browsers, emulator images and ML models
-- **Logs**, including system logs (shown as a command to copy, since they are root-owned)
+- **Logs**, including old rotated system logs, which you can delete from inside the app with your administrator password
 - **Leftovers** from apps you have removed, found by scanning your cache and log folders
 
 Each target is labeled as either rebuilt automatically or downloaded again on next use. Leftovers are never selected by default. The full list is in [`catalog.json`](Sources/TobiasCore/Resources/catalog.json).
@@ -91,7 +91,7 @@ Each target is labeled as either rebuilt automatically or downloaded again on ne
 
 - Nothing is deleted without a preview and your confirmation.
 - Wildcards over shared folders (such as `~/Library/Caches/*`) are rejected.
-- It never runs `sudo`. Root-owned files show a command for you to copy instead.
+- It only uses `sudo` when you press ▶︎ on *System logs*. It asks for your password every time and never stores it.
 - It never touches Photos, Mail or Messages.
 
 The full rules are in [docs/SAFETY.md](docs/SAFETY.md).
@@ -128,7 +128,7 @@ Create `~/Library/Application Support/Tobias/targets.json`. An entry with the sa
 |---|---|
 | `removeContents` | Deletes what is inside the folder |
 | `command` | Runs the fixed shell command you set in `command` |
-| `manual` | Shows `manualCommand` for you to copy |
+| `manual` | Shows `manualCommand` for you to copy (custom targets cannot run as administrator) |
 
 > [!CAUTION]
 > A `command` target runs in your login shell, so only add commands you would type yourself.

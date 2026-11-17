@@ -22,8 +22,16 @@ enum Strings {
     static let blocked = "Blocked"
     static let blockedHint = "Grant Full Disk Access to Tobias in System Settings → Privacy & Security."
     static let manual = "Manual"
-    static let manualHint = "Needs administrator rights. Tobias never runs sudo; run this yourself in Terminal."
+    static let manualHint = "Needs administrator rights. Copy the command and run it yourself in Terminal."
     static let manualShort = "Needs administrator rights."
+    static let adminBadge = "Administrator"
+    static let run = "Run"
+    static let stop = "Stop"
+    static let passwordPrompt = "Password:"
+    static let passwordField = "Administrator password"
+    static let runsAsAdmin = "Runs as administrator. Type your Mac password in the terminal when asked; Tobias never stores it."
+    static let pressRun = "Press Run to start."
+    static let rootStopped = "Stopped"
     static let empty = "Nothing to clean"
     static let notFound = "Not found on this Mac"
     static let redownloads = "Downloads again"
@@ -66,4 +74,7 @@ enum Strings {
     static let tipLead = "Clean everything reclaimable and you get to "
     static func tipFigure(_ size: String) -> String { "\(size) free" }
     static func showCommand(_ label: String) -> String { "Show command for \(label)" }
+    static func runAsAdmin(_ label: String) -> String { "Run \(label) as administrator" }
+    static func rootDone(_ size: String?) -> String { size.map { "Done · freed \($0)" } ?? "Done" }
+    static func rootFailed(_ code: Int32) -> String { "Failed, exit \(code)" }
 }

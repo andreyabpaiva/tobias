@@ -3,7 +3,7 @@
 # The app itself has no network code. Only this script talks to GitHub.
 set -euo pipefail
 
-REPO="${TOBIAS_REPO:-OWNER/tobias}"
+REPO="${TOBIAS_REPO:-andreyabpaiva/tobias}"
 APP_DIR="${TOBIAS_APP_DIR:-$HOME/Applications}"
 BIN_DIR="${TOBIAS_BIN_DIR:-$HOME/.local/bin}"
 APP="$APP_DIR/Tobias.app"

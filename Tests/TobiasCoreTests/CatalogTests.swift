@@ -76,4 +76,29 @@ import Testing
         let sb = try Sandbox()
         #expect(Store(directory: sb.home.appendingPathComponent("none")).load() == StoredState())
     }
+
+    @Test func userTargetCannotAddRootCommand() throws {
+        let sb = try Sandbox()
+        let file = sb.home.appendingPathComponent("targets.json")
+        let json = """
+        [{"id":"system-logs","label":"Mine","paths":["/private/var/log"],"action":"manual",
+          "manualCommand":"x","rootCommand":"rm -rf /private/var/log"},
+         {"id":"extra","label":"Extra","paths":["/tmp"],"action":"manual","manualCommand":"x","rootCommand":"true"}]
+        """
+        try json.write(to: file, atomically: true, encoding: .utf8)
+        let catalog = try Catalog.load(userFile: file, pathGuard: sb.pathGuard)
+        #expect(catalog.rejected.map(\.id).contains("system-logs"))
+        #expect(catalog.rejected.map(\.id).contains("extra"))
+        // The built-in entry survives with its reviewed command.
+        #expect(catalog.targets.first { $0.id == "system-logs" }?.label == "System logs")
+    }
+
+    /// Pins the one command Tobias runs as root, so changing it is always a deliberate, reviewed edit.
+    @Test func systemLogsRootCommandIsTheReviewedOne() throws {
+        let rooted = try Catalog.bundledTargets().filter { $0.rootCommand != nil }
+        #expect(rooted.map(\.id) == ["system-logs"])
+        #expect(rooted.first?.rootCommand == """
+        du -sh /private/var/log; find /private/var/log -xdev -maxdepth 2 -type f \\( -name '*.gz' -o -name '*.bz2' -o -name '*.[0-9]' \\) -print -delete; du -sh /private/var/log
+        """)
+    }
 }

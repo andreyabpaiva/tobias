@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Installs Tobias without cloning the repo:
-#   curl -fsSL https://github.com/OWNER/tobias/releases/latest/download/install.sh | bash
+#   curl -fsSL https://github.com/andreyabpaiva/tobias/releases/latest/download/install.sh | bash
 # Downloads a release tarball, verifies its SHA-256, builds it locally and installs
 # Tobias.app to ~/Applications and the `tobias` command to ~/.local/bin. No sudo.
 #
 # Environment (all optional):
-#   TOBIAS_REPO      owner/name on GitHub              (default OWNER/tobias)
+#   TOBIAS_REPO      owner/name on GitHub              (default andreyabpaiva/tobias)
 #   TOBIAS_REF       release tag to install            (default: latest)
 #   TOBIAS_TARBALL   local tarball instead of downloading (for testing)
 #   TOBIAS_SHA256    expected checksum for TOBIAS_TARBALL
@@ -14,7 +14,7 @@
 #   TOBIAS_NO_OPEN   set to 1 to skip opening the app
 set -euo pipefail
 
-REPO="${TOBIAS_REPO:-OWNER/tobias}"
+REPO="${TOBIAS_REPO:-andreyabpaiva/tobias}"
 REF="${TOBIAS_REF:-latest}"
 APP_DIR="${TOBIAS_APP_DIR:-$HOME/Applications}"
 BIN_DIR="${TOBIAS_BIN_DIR:-$HOME/.local/bin}"

@@ -30,6 +30,14 @@ struct ContentView: View {
         )) {
             CleanSheet(model: model)
         }
+        .sheet(isPresented: Binding(
+            get: { model.rootRun != nil },
+            set: { if !$0 { model.closeRootRun() } }
+        )) {
+            if let session = model.rootRun {
+                RootRunSheet(model: model, session: session)
+            }
+        }
     }
 }
 

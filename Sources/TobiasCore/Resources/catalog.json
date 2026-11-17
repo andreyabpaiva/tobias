@@ -130,10 +130,14 @@
   {
     "id": "system-logs",
     "label": "System logs",
-    "note": "Root-owned. Find the biggest file, then truncate it yourself in Terminal. Tobias never runs sudo.",
-    "paths": ["/private/var/log"],
+    "note": "Root-owned. Run deletes old rotated logs (.gz, .bz2 and numbered copies) as administrator. Logs macOS is writing now are not touched.",
+    "paths": [
+      "/private/var/log/*.{gz,bz2}", "/private/var/log/*.[0-9]",
+      "/private/var/log/*/*.{gz,bz2}", "/private/var/log/*/*.[0-9]"
+    ],
     "action": "manual",
-    "manualCommand": "sudo du -sh /private/var/log/* | sort -rh | head",
+    "manualCommand": "sudo sh -c \"du -sh /private/var/log; find /private/var/log -xdev -maxdepth 2 -type f \\( -name '*.gz' -o -name '*.bz2' -o -name '*.[0-9]' \\) -print -delete; du -sh /private/var/log\"",
+    "rootCommand": "du -sh /private/var/log; find /private/var/log -xdev -maxdepth 2 -type f \\( -name '*.gz' -o -name '*.bz2' -o -name '*.[0-9]' \\) -print -delete; du -sh /private/var/log",
     "risk": "regenerates"
   },
   {
