@@ -46,7 +46,7 @@ else
     [ -n "$tag" ] || fail "could not find the latest release of $REPO"
   fi
   url="https://github.com/$REPO/releases/download/$tag/tobias-$tag.tar.gz"
-  say "Downloading Tobias $tag…"
+  say "Downloading Tobias ${tag}…"
   tarball="$tmp/tobias.tar.gz"
   curl -fsSL -o "$tarball" "$url" || fail "download failed: $url"
   curl -fsSL -o "$tmp/tobias.sha256" "$url.sha256" || fail "checksum file missing: $url.sha256"
