@@ -3,7 +3,7 @@ import Testing
 @testable import TobiasCore
 
 /// Runs `PrivilegedRun` against a shell script that behaves like `sudo -S -p <marker>`, never real sudo.
-@Suite struct PrivilegedRunTests {
+@Suite(.timeLimit(.minutes(1))) struct PrivilegedRunTests {
     /// Asks for the password up to twice; "secret" runs the command, anything else fails.
     static let fakeSudo = """
     m='\(PrivilegedRun.promptMarker)'

@@ -24,6 +24,9 @@ public final class PrivilegedRun: @unchecked Sendable {
     private let output = Pipe()
     private let lock = NSLock()
     private var pending = ""
+    private var exitStatus: Int32?
+    private var outputClosed = false
+    private var finished = false
 
     /// `executable` and `arguments` are for tests; the app uses the defaults.
     public init(command: String, executable: String = PrivilegedRun.sudo, arguments: [String]? = nil) {
@@ -40,22 +43,19 @@ public final class PrivilegedRun: @unchecked Sendable {
     public func start() throws {
         // Writing a password after sudo has gone away must not kill the app.
         signal(SIGPIPE, SIG_IGN)
-        output.fileHandleForReading.readabilityHandler = { [weak self] handle in
+        // The handlers hold `self` strongly until the run finishes, so the stream always ends.
+        output.fileHandleForReading.readabilityHandler = { handle in
             let data = handle.availableData
-            guard !data.isEmpty else { return }
-            self?.consume(data)
-        }
-        process.terminationHandler = { [weak self] process in
-            // Give output already in the pipe a moment to arrive. Reading to end of file instead would
-            // hang after `stop()`, because a child the shell started can keep the pipe open.
-            DispatchQueue.global().asyncAfter(deadline: .now() + 0.3) {
-                guard let self else { return }
-                self.output.fileHandleForReading.readabilityHandler = nil
-                self.flush()
-                try? self.input.fileHandleForWriting.close()
-                self.continuation.yield(.exited(process.terminationStatus))
-                self.continuation.finish()
+            if data.isEmpty {
+                self.closeOutput()
+            } else {
+                self.consume(data)
             }
+        }
+        process.terminationHandler = { process in
+            self.markExited(process.terminationStatus)
+            // A child the shell started can keep the output open after `stop()`, so don't wait for it.
+            DispatchQueue.global().asyncAfter(deadline: .now() + 0.5) { self.closeOutput() }
         }
         do {
             try process.run()
@@ -75,6 +75,40 @@ public final class PrivilegedRun: @unchecked Sendable {
         if process.isRunning { process.terminate() }
     }
 
+    // MARK: - Finishing
+
+    private func markExited(_ status: Int32) {
+        lock.lock()
+        exitStatus = status
+        lock.unlock()
+        finishIfDone()
+    }
+
+    private func closeOutput() {
+        lock.lock()
+        outputClosed = true
+        lock.unlock()
+        finishIfDone()
+    }
+
+    /// Ends the stream once: after the process exited and its output closed (or the grace period passed).
+    private func finishIfDone() {
+        lock.lock()
+        guard !finished, let status = exitStatus, outputClosed else {
+            lock.unlock()
+            return
+        }
+        finished = true
+        if !pending.isEmpty { continuation.yield(.output(pending)) }
+        pending = ""
+        lock.unlock()
+        output.fileHandleForReading.readabilityHandler = nil
+        process.terminationHandler = nil
+        try? input.fileHandleForWriting.close()
+        continuation.yield(.exited(status))
+        continuation.finish()
+    }
+
     // MARK: - Output
 
     private func consume(_ data: Data) {
@@ -92,13 +126,6 @@ public final class PrivilegedRun: @unchecked Sendable {
         let ready = String(pending.dropLast(keep))
         if !ready.isEmpty { continuation.yield(.output(ready)) }
         pending = String(pending.suffix(keep))
-    }
-
-    private func flush() {
-        lock.lock()
-        defer { lock.unlock() }
-        if !pending.isEmpty { continuation.yield(.output(pending)) }
-        pending = ""
     }
 
     /// Length of the longest suffix of `text` that is a proper prefix of the marker.
