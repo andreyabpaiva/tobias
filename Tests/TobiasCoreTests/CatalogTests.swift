@@ -101,4 +101,16 @@ import Testing
         du -sh /private/var/log; find /private/var/log -xdev -maxdepth 2 -type f \\( -name '*.gz' -o -name '*.bz2' -o -name '*.[0-9]' \\) -print -delete; du -sh /private/var/log
         """)
     }
+
+    @Test func emulatorSnapshotsTargetOnlySelectsSnapshotFolders() throws {
+        let sb = try Sandbox()
+        let fm = FileManager.default
+        for dir in [".android/avd/Pixel.avd/snapshots/default_boot", ".android/avd/Tablet.avd/data"] {
+            try fm.createDirectory(at: sb.home.appendingPathComponent(dir), withIntermediateDirectories: true)
+        }
+        let catalog = try Catalog.load(userFile: nil, pathGuard: sb.pathGuard)
+        let target = try #require(catalog.targets.first { $0.id == "android-emulator-snapshots" })
+        #expect(target.action == .removeContents)
+        #expect(target.resolvedPaths(using: sb.pathGuard) == [sb.home.path + "/.android/avd/Pixel.avd/snapshots"])
+    }
 }

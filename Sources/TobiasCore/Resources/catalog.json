@@ -205,5 +205,23 @@
     "action": "removeContents",
     "quitApps": ["com.google.android.studio"],
     "risk": "redownloads"
+  },
+  {
+    "id": "android-emulator-snapshots",
+    "label": "Android emulator snapshots",
+    "note": "Saved quick-boot states. The next launch is a full boot; apps and data on the device stay. Close the emulator first.",
+    "paths": ["~/.android/avd/*.avd/snapshots"],
+    "action": "removeContents",
+    "quitApps": ["com.google.android.studio"],
+    "risk": "regenerates"
+  },
+  {
+    "id": "android-ndk",
+    "label": "Android NDK",
+    "note": "Only native (C/C++) Android builds use it. The SDK Manager downloads it again when a project needs it.",
+    "paths": ["~/Library/Android/sdk/ndk"],
+    "action": "removeContents",
+    "quitApps": ["com.google.android.studio"],
+    "risk": "redownloads"
   }
 ]
